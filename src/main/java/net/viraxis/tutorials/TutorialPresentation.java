@@ -140,6 +140,7 @@ final class TutorialPresentation {
                 data.text = List.of(text);
                 data.visibility = HologramVisibility.MANUAL;
                 data.visibilityDistance = 12;
+                data.teleportDuration = 1;
                 data.textShadow = true;
                 data.seeThrough = true;
                 data.background = "transparent";
