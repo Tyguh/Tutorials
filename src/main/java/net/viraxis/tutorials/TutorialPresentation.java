@@ -27,6 +27,8 @@ final class TutorialPresentation {
     private static final double MARKER_HEIGHT = 0.45D;
     private static final double BOB_AMPLITUDE = 0.11D;
     private static final double BOB_SPEED = 0.10D;
+    private static final double POSITION_LEAD_TICKS = 1.0D;
+    private static final double MAX_PREDICTED_MOTION_SQUARED = 4.0D;
     private final Map<UUID, Session> sessions = new HashMap<>();
     private final BukkitTask task;
     private long ticks;
@@ -88,6 +90,7 @@ final class TutorialPresentation {
         private int regionY = Integer.MIN_VALUE;
         private int regionZ = Integer.MIN_VALUE;
         private boolean insideSpawn;
+        private Location previousEye;
 
         private Session(Player player) {
             this.hologramId = "tutorial-objective-" + player.getUniqueId();
@@ -123,8 +126,9 @@ final class TutorialPresentation {
             }
 
             Vector viewDirection = horizontalDirection(playerEye);
-            double bob = Math.sin(ticks * BOB_SPEED) * BOB_AMPLITUDE;
-            Location marker = playerEye.clone().add(viewDirection.clone().multiply(MARKER_DISTANCE))
+            Location predictedEye = predictNextEye(playerEye);
+            double bob = Math.sin((ticks + POSITION_LEAD_TICKS) * BOB_SPEED) * BOB_AMPLITUDE;
+            Location marker = predictedEye.add(viewDirection.clone().multiply(MARKER_DISTANCE))
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
 
             String arrow = targetDirection == null ? "↑" : DirectionArrow.between(
@@ -162,9 +166,21 @@ final class TutorialPresentation {
         }
 
         private void hideMarker(Player player) {
+            previousEye = null;
             if (hologram == null || !markerVisible) return;
             hologram.hideManual(player);
             markerVisible = false;
+        }
+
+        private Location predictNextEye(Location playerEye) {
+            Location predicted = playerEye.clone();
+            if (previousEye != null && previousEye.getWorld() == playerEye.getWorld()) {
+                Vector motion = playerEye.toVector().subtract(previousEye.toVector());
+                if (motion.lengthSquared() <= MAX_PREDICTED_MOTION_SQUARED)
+                    predicted.add(motion.multiply(POSITION_LEAD_TICKS));
+            }
+            previousEye = playerEye.clone();
+            return predicted;
         }
 
         private boolean isInsideSpawn(Location location) {
