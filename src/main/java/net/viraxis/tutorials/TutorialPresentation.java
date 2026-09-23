@@ -13,7 +13,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
@@ -103,21 +102,9 @@ final class TutorialPresentation {
             if (bossBar == null) {
                 bossBar = BossBar.bossBar(title, progress, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS);
                 player.showBossBar(bossBar);
-                moveVotePartyBarBelow(player);
             } else {
                 bossBar.name(title);
                 bossBar.progress(progress);
-            }
-        }
-
-        private void moveVotePartyBarBelow(Player player) {
-            Plugin voting = Bukkit.getPluginManager().getPlugin("Voting");
-            if (voting == null || !voting.isEnabled()) return;
-            try {
-                Object manager = voting.getClass().getMethod("getVotingManager").invoke(voting);
-                if (manager != null)
-                    manager.getClass().getMethod("moveVotePartyBarBelow", Player.class).invoke(manager, player);
-            } catch (ReflectiveOperationException | RuntimeException ignored) {
             }
         }
 
