@@ -30,6 +30,8 @@ public final class TutorialConfigCheck {
         verifyArrow3d(0, 0, 1, 0, -1, 1, "↓");
         verifyArrow3d(0, 0, 1, 0, 1, 1, "↑");
         verifyArrow3d(0, 0.94, 0.342, 0, 0, 1, "↓");
+        verifyArrow3d(0, 0.7, 0.7, 1, 0, 1, "↙");
+        verifyArrow3d(0, 0.7, 0.7, -1, 0, 1, "↘");
         verifyArrow(0, 1, 1, 0, "←");
         System.out.println("Verified " + ids.size() + " Skyblock tutorial quests");
     }

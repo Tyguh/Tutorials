@@ -22,10 +22,23 @@ final class DirectionArrow {
 
         double pitchDifference = Math.asin(Math.max(-1.0D, Math.min(1.0D, targetY)))
                 - Math.asin(Math.max(-1.0D, Math.min(1.0D, viewY)));
-        if (pitchDifference <= -VERTICAL_THRESHOLD_RADIANS) return "↓";
-        if (pitchDifference >= VERTICAL_THRESHOLD_RADIANS) return "↑";
+        String horizontal = between(viewX, viewZ, targetX, targetZ);
+        if (pitchDifference <= -VERTICAL_THRESHOLD_RADIANS) {
+            return switch (horizontal) {
+                case "←", "↖", "↙" -> "↙";
+                case "→", "↗", "↘" -> "↘";
+                default -> "↓";
+            };
+        }
+        if (pitchDifference >= VERTICAL_THRESHOLD_RADIANS) {
+            return switch (horizontal) {
+                case "←", "↖", "↙" -> "↖";
+                case "→", "↗", "↘" -> "↗";
+                default -> "↑";
+            };
+        }
 
-        return between(viewX, viewZ, targetX, targetZ);
+        return horizontal;
     }
 
     static String between(double viewX, double viewZ, double targetX, double targetZ) {
