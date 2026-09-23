@@ -1,0 +1,13 @@
+# Tutorials
+
+This is a MassiveCore plugin for ordered, per-gamemode tutorials. The active gamemode is selected in `mconf/tutorials_conf/conf.json` (`activeGamemode`); its quests live in `mconf/tutorials/<gamemode>.yml`. `none` disables tutorials on a server. To support a later gamemode, add another YAML file and select it on that server. Progress is saved by player UUID under the gamemode and tutorial id in MassiveCore's MStore `tutorials_players` collection, so a Skyblock tutorial does not collide with another gamemode.
+
+The bundled Skyblock tutorial starts at the existing Discord NPC, then covers account linking, two votes, island creation, generator mining, island expansion, the shop, a completed sale, island settings, and a successful free-rank claim. It continues after the rank claim through the Enchanter, Tinkerer, Coin Shop, Outposts, and Island Top. Existing accounts satisfy state-backed objectives only when each one becomes current, so a saved free rank advances that objective without removing the rest of the guide.
+
+Every active objective has a personal boss bar. While the player is inside the WorldGuard `spawn` region, a smoothly bobbing personal hologram stays in view and uses eight directional arrows to point toward the objective. A quest `target` can name a FancyNpcs NPC or provide `world`, `x`, `y`, and `z`; the marker shows distance beyond `distance-threshold` (10 blocks by default). It hides outside spawn and returns when the player re-enters, while the boss bar remains visible. Completing an objective sends the Feedback completion card and title, then immediately presents the next objective.
+
+`/tutorial` or `/guide` shows the current step. Operators can run `/tutorial reload` after editing the current YAML file or `/tutorial reset <online-player>` for testing. A gamemode or trigger-dependency change needs a server restart. Quest `id` values are stable progress keys; change names and text freely, but keep ids when editing an active tutorial.
+
+Supported triggers: `NpcInteract` (`npc`), `HasIsland`, `BlockBreak` (optional `block` or `blocks`), `BlockPlace` (`block` or `blocks`), `AnyBlockPlace`, `Command` (`content`), `ShopSale` (optional `currency`), `DiscordLinked`, `VoteCount` (`minimum-votes`), and `FreeRankClaimed`. Block triggers can use `own-island: true`. Supported actions: `Message`, `NpcMessage` (`speaker` and `content`), and `Command` (`command`, `source: Console`). Completion is saved before a command action runs.
+
+Build and validate with `bash ../MassiveCore/gradlew shadowJar verifyTutorialConfig`. Install `build/libs/Tutorials.jar` on the Map 2 Skyblock server alongside MassiveCore, Holograms, FancyNpcs, Islands, Currencies, Essentials, Voting, DiscordRelay, and LuckPerms.

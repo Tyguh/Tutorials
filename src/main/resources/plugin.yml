@@ -1,0 +1,9 @@
+name: Tutorials
+main: net.viraxis.tutorials.TutorialsPlugin
+version: '1.0-SNAPSHOT'
+api-version: '1.21'
+depend: [MassiveCore]
+softdepend: [Islands, Currencies, DiscordRelay, Voting, LuckPerms, Essentials, FancyNpcs, Holograms, WorldGuard]
+permissions:
+  tutorials.admin:
+    default: op
