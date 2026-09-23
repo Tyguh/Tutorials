@@ -134,7 +134,7 @@ final class TutorialPresentation {
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
 
             String arrow = targetDirection == null ? "↑" : DirectionArrow.between(
-                    viewDirection.getX(), viewDirection.getY(), viewDirection.getZ(),
+                    smoothedYaw, smoothedPitch,
                     targetDirection.getX(), targetDirection.getY(), targetDirection.getZ());
             String text = "<#E69A30><b>" + arrow + "</b> <#F4D35E>" + quest.name();
             if (quest.target() != null && targetDistance > quest.target().distanceThreshold())

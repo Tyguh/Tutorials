@@ -6,6 +6,34 @@ final class DirectionArrow {
 
     private DirectionArrow() {}
 
+    static String between(float viewYaw, float viewPitch,
+                          double targetX, double targetY, double targetZ) {
+        double targetLength = Math.sqrt(targetX * targetX + targetY * targetY + targetZ * targetZ);
+        if (targetLength * targetLength < MIN_LENGTH_SQUARED) return "↑";
+
+        double targetYaw = Math.toDegrees(Math.atan2(-targetX, targetZ));
+        double targetPitch = Math.toDegrees(-Math.asin(Math.max(-1.0D, Math.min(1.0D, targetY / targetLength))));
+        double yawDifference = wrapDegrees(targetYaw - viewYaw);
+        double pitchDifference = Math.toRadians(targetPitch - viewPitch);
+        String horizontal = fromYawDifference(yawDifference);
+
+        if (pitchDifference >= VERTICAL_THRESHOLD_RADIANS) {
+            return switch (horizontal) {
+                case "←", "↖", "↙" -> "↙";
+                case "→", "↗", "↘" -> "↘";
+                default -> "↓";
+            };
+        }
+        if (pitchDifference <= -VERTICAL_THRESHOLD_RADIANS) {
+            return switch (horizontal) {
+                case "←", "↖", "↙" -> "↖";
+                case "→", "↗", "↘" -> "↗";
+                default -> "↑";
+            };
+        }
+        return horizontal;
+    }
+
     static String between(double viewX, double viewY, double viewZ,
                           double targetX, double targetY, double targetZ) {
         double viewLength = Math.sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
@@ -53,7 +81,14 @@ final class DirectionArrow {
         targetZ /= targetLength;
         double dot = Math.max(-1.0D, Math.min(1.0D, viewX * targetX + viewZ * targetZ));
         double cross = viewX * targetZ - viewZ * targetX;
-        int direction = (int) Math.round(Math.atan2(cross, dot) / (Math.PI / 4.0D));
+        return fromDirection((int) Math.round(Math.atan2(cross, dot) / (Math.PI / 4.0D)));
+    }
+
+    private static String fromYawDifference(double yawDifference) {
+        return fromDirection((int) Math.round(yawDifference / 45.0D));
+    }
+
+    private static String fromDirection(int direction) {
         return switch (direction) {
             case 1 -> "↗";
             case 2 -> "→";
@@ -64,5 +99,12 @@ final class DirectionArrow {
             case -1 -> "↖";
             default -> "↑";
         };
+    }
+
+    private static double wrapDegrees(double degrees) {
+        double wrapped = degrees % 360.0D;
+        if (wrapped >= 180.0D) wrapped -= 360.0D;
+        if (wrapped < -180.0D) wrapped += 360.0D;
+        return wrapped;
     }
 }
