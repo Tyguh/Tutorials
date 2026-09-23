@@ -17,6 +17,8 @@ public final class TutorialConfigCheck {
             throw new AssertionError("The first marker must track the Discord NPC");
         if (!line.quests().get(1).triggers().getFirst().type().equals("DiscordLinked"))
             throw new AssertionError("Discord must use a linked-account check");
+        if (!"discord".equals(line.quests().get(1).target().npc()))
+            throw new AssertionError("The Discord linking objective must continue tracking the Discord NPC");
         if (line.quests().get(2).triggers().getFirst().minimumVotes() != 2)
             throw new AssertionError("Vote count must be two");
         if (!line.quests().get(9).triggers().getFirst().type().equals("FreeRankClaimed"))

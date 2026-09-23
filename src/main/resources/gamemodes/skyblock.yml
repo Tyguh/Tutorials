@@ -29,6 +29,10 @@ quests:
     name: Link Your Discord
     description: Use /discord link and finish the linking flow.
     completion-at: 1
+    target:
+      npc: discord
+      label: Our Discord
+      distance-threshold: 10
     start-actions:
       - type: Message
         content: "Use <h>/discord link</h> and finish the link in Discord. This objective completes only after your account is actually linked."
