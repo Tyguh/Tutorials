@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
@@ -38,7 +39,7 @@ final class TutorialPresentation {
         this.task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
     }
 
-    void sync(Player player, TutorialDefinition.Quest quest, int count, int questIndex, int questTotal) {
+    void sync(Player player, TutorialDefinition.Quest quest, int count) {
         if (player == null || !player.isOnline() || quest == null) {
             clear(player);
             return;
@@ -46,8 +47,6 @@ final class TutorialPresentation {
         Session session = sessions.computeIfAbsent(player.getUniqueId(), ignored -> new Session(player));
         session.quest = quest;
         session.count = Math.min(count, quest.completionAt());
-        session.questIndex = questIndex;
-        session.questTotal = questTotal;
         session.updateBossBar(player);
     }
 
@@ -82,8 +81,6 @@ final class TutorialPresentation {
         private ViraxisHologram hologram;
         private TutorialDefinition.Quest quest;
         private int count;
-        private int questIndex;
-        private int questTotal;
         private boolean markerVisible;
         private UUID regionWorld;
         private int regionX = Integer.MIN_VALUE;
@@ -102,14 +99,25 @@ final class TutorialPresentation {
         private void updateBossBar(Player player) {
             float progress = Math.max(0.0F, Math.min(1.0F, count / (float) Math.max(1, quest.completionAt())));
             String counter = quest.completionAt() > 1 ? " <gray>(" + count + "/" + quest.completionAt() + ")</gray>" : "";
-            var title = Txt.colorize(player, "<#66D9E8><b>Objective:</b> <white>" + quest.name() + counter
-                    + " <dark_gray>[" + questIndex + "/" + questTotal + "]</dark_gray>");
+            var title = Txt.colorize(player, "<#66D9E8><b>Objective:</b> <white>" + quest.name() + counter);
             if (bossBar == null) {
-                bossBar = BossBar.bossBar(title, progress, BossBar.Color.BLUE, BossBar.Overlay.PROGRESS);
+                bossBar = BossBar.bossBar(title, progress, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS);
                 player.showBossBar(bossBar);
+                moveVotePartyBarBelow(player);
             } else {
                 bossBar.name(title);
                 bossBar.progress(progress);
+            }
+        }
+
+        private void moveVotePartyBarBelow(Player player) {
+            Plugin voting = Bukkit.getPluginManager().getPlugin("Voting");
+            if (voting == null || !voting.isEnabled()) return;
+            try {
+                Object manager = voting.getClass().getMethod("getVotingManager").invoke(voting);
+                if (manager != null)
+                    manager.getClass().getMethod("moveVotePartyBarBelow", Player.class).invoke(manager, player);
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
             }
         }
 

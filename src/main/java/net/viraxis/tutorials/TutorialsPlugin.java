@@ -308,8 +308,7 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
         if (presentation == null) return;
         TutorialDefinition.Quest quest = current(progress);
         if (quest == null) { presentation.clear(player); return; }
-        int index = definition.quests().indexOf(quest) + 1;
-        presentation.sync(player, quest, progress.counts.getOrDefault(quest.id(), 0), index, definition.quests().size());
+        presentation.sync(player, quest, progress.counts.getOrDefault(quest.id(), 0));
     }
 
     @Override public void onDisable() {
