@@ -27,6 +27,9 @@ public final class TutorialConfigCheck {
         verifyArrow(0, 1, -1, 1, "↗");
         verifyArrow(0, 1, -1, 0, "→");
         verifyArrow(0, 1, 0, -1, "↓");
+        verifyArrow3d(0, 0, 1, 0, -1, 1, "↓");
+        verifyArrow3d(0, 0, 1, 0, 1, 1, "↑");
+        verifyArrow3d(0, 0.94, 0.342, 0, 0, 1, "↓");
         verifyArrow(0, 1, 1, 0, "←");
         System.out.println("Verified " + ids.size() + " Skyblock tutorial quests");
     }
@@ -34,5 +37,12 @@ public final class TutorialConfigCheck {
     private static void verifyArrow(double viewX, double viewZ, double targetX, double targetZ, String expected) {
         String actual = DirectionArrow.between(viewX, viewZ, targetX, targetZ);
         if (!expected.equals(actual)) throw new AssertionError("Expected " + expected + " but got " + actual);
+    }
+
+    private static void verifyArrow3d(double viewX, double viewY, double viewZ,
+                                      double targetX, double targetY, double targetZ, String expected) {
+        String actual = DirectionArrow.between(viewX, viewY, viewZ, targetX, targetY, targetZ);
+        if (!expected.equals(actual))
+            throw new IllegalStateException("Expected arrow " + expected + " but got " + actual);
     }
 }

@@ -124,7 +124,6 @@ final class TutorialPresentation {
             }
 
             Vector viewDirection = smoothedViewDirection(playerEye);
-            Vector horizontalViewDirection = horizontalDirection(viewDirection, smoothedYaw);
             Vector motion = observedMotion(playerEye);
             Location predictedEye = predictNextEye(playerEye, motion);
             if (motion == null || motion.lengthSquared() <= MOVEMENT_THRESHOLD_SQUARED)
@@ -135,8 +134,8 @@ final class TutorialPresentation {
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
 
             String arrow = targetDirection == null ? "↑" : DirectionArrow.between(
-                    horizontalViewDirection.getX(), horizontalViewDirection.getZ(),
-                    targetDirection.getX(), targetDirection.getZ());
+                    viewDirection.getX(), viewDirection.getY(), viewDirection.getZ(),
+                    targetDirection.getX(), targetDirection.getY(), targetDirection.getZ());
             String text = "<#E69A30><b>" + arrow + "</b> <#F4D35E>" + quest.name();
             if (quest.target() != null && targetDistance > quest.target().distanceThreshold())
                 text += " <gray>(" + String.format(java.util.Locale.ROOT, "%.1fm", targetDistance) + ")</gray>";
@@ -232,13 +231,6 @@ final class TutorialPresentation {
                 HologramsPlugin.get().getHolograms().remove(hologramId);
             markerVisible = false;
         }
-    }
-
-    static Vector horizontalDirection(Vector viewDirection, float yaw) {
-        Vector direction = viewDirection.clone().setY(0.0D);
-        if (direction.lengthSquared() > 1.0E-6D) return direction.normalize();
-        double radians = Math.toRadians(yaw);
-        return new Vector(-Math.sin(radians), 0.0D, Math.cos(radians));
     }
 
     static double wrapDegrees(double degrees) {

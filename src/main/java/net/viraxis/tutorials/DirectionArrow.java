@@ -2,8 +2,31 @@ package net.viraxis.tutorials;
 
 final class DirectionArrow {
     private static final double MIN_LENGTH_SQUARED = 1.0E-6D;
+    private static final double VERTICAL_THRESHOLD_RADIANS = Math.PI / 8.0D;
 
     private DirectionArrow() {}
+
+    static String between(double viewX, double viewY, double viewZ,
+                          double targetX, double targetY, double targetZ) {
+        double viewLength = Math.sqrt(viewX * viewX + viewY * viewY + viewZ * viewZ);
+        double targetLength = Math.sqrt(targetX * targetX + targetY * targetY + targetZ * targetZ);
+        if (viewLength * viewLength < MIN_LENGTH_SQUARED || targetLength * targetLength < MIN_LENGTH_SQUARED)
+            return "↑";
+
+        viewX /= viewLength;
+        viewY /= viewLength;
+        viewZ /= viewLength;
+        targetX /= targetLength;
+        targetY /= targetLength;
+        targetZ /= targetLength;
+
+        double pitchDifference = Math.asin(Math.max(-1.0D, Math.min(1.0D, targetY)))
+                - Math.asin(Math.max(-1.0D, Math.min(1.0D, viewY)));
+        if (pitchDifference <= -VERTICAL_THRESHOLD_RADIANS) return "↓";
+        if (pitchDifference >= VERTICAL_THRESHOLD_RADIANS) return "↑";
+
+        return between(viewX, viewZ, targetX, targetZ);
+    }
 
     static String between(double viewX, double viewZ, double targetX, double targetZ) {
         double viewLength = Math.hypot(viewX, viewZ);
