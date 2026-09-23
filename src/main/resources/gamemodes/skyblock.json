@@ -1,0 +1,443 @@
+{
+  "tutorialId": "getting-started",
+  "name": "Your Skyblock Start",
+  "quests": [
+    {
+      "id": "meet-guide",
+      "name": "Speak with Our Discord",
+      "description": "Follow the floating marker to the Discord NPC at spawn and interact with it.",
+      "completionAt": 1,
+      "target": {
+        "npc": "discord",
+        "label": "Our Discord",
+        "distanceThreshold": 10
+      },
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Follow the floating <h>objective marker</h> and speak with <h>Our Discord</h> at spawn. The distance appears while you are more than 10 blocks away."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "discord"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "NpcMessage",
+          "speaker": "Our Discord",
+          "content": "Welcome to Skyblock! Link your account so your Discord roles, rewards, and Minecraft account stay connected."
+        }
+      ]
+    },
+    {
+      "id": "discord",
+      "name": "Link Your Discord",
+      "description": "Use /discord link and finish the linking flow.",
+      "completionAt": 1,
+      "target": {
+        "npc": "discord",
+        "label": "Our Discord",
+        "distanceThreshold": 10
+      },
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Use <h>/discord link</h> and finish the link in Discord. This objective completes only after your account is actually linked."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "DiscordLinked"
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "vote",
+      "name": "Vote Twice",
+      "description": "Use /vote and complete two votes toward your free rank.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Open <h>/vote</h> and complete two votes. Your real lifetime vote count is checked automatically."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "VoteCount",
+          "minimumVotes": 2
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "island",
+      "name": "Create Your Island",
+      "description": "Use /is create, choose an island, and travel there with /is home.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Use <h>/is create</h>, choose your island, then use <h>/is home</h>. Your island is detected automatically."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "HasIsland"
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "generator",
+      "name": "Mine 16 Generator Blocks",
+      "description": "Mine 16 blocks from the cobblestone generator on your island.",
+      "completionAt": 16,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Mine <h>16 generator blocks</h> on your island. The generator can produce ores as you progress."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "BlockBreak",
+          "ownIsland": true,
+          "blocks": [
+            "COBBLESTONE",
+            "COAL_ORE",
+            "IRON_ORE",
+            "GOLD_ORE",
+            "DIAMOND_ORE",
+            "EMERALD_ORE"
+          ]
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "expand",
+      "name": "Expand Your Island",
+      "description": "Place 16 blocks on your island to make more room.",
+      "completionAt": 16,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Use the blocks you mined to place <h>16 blocks</h> anywhere on your island."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "AnyBlockPlace",
+          "ownIsland": true
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "shop",
+      "name": "Browse the Shop",
+      "description": "Open /shop and look through the server economy.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Open <h>/shop</h> to see what your island can buy and sell."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "Command",
+          "content": "/shop"
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "first-sale",
+      "name": "Make Your First Sale",
+      "description": "Successfully sell an eligible item through the shop or /sell hand.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Sell an eligible item through the shop or with <h>/sell hand</h>. Only a successful sale counts."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "ShopSale",
+          "currency": "money"
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "settings",
+      "name": "Review Island Settings",
+      "description": "Use /is settings and learn where island permissions are controlled.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Use <h>/is settings</h>. You can manage teammates with <h>/is members</h> and their access with <h>/is perms</h>."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "Command",
+          "content": "/is settings"
+        },
+        {
+          "type": "Command",
+          "content": "/island settings"
+        }
+      ],
+      "completeActions": [
+
+      ]
+    },
+    {
+      "id": "free-rank",
+      "name": "Claim Your Free Rank",
+      "description": "Open /freerank, meet the requirements, and claim the permanent rank.",
+      "completionAt": 1,
+      "startActions": [
+        {
+          "type": "Message",
+          "content": "Open <h>/freerank</h> and claim it after meeting the listed requirements. If you already own it, this objective completes automatically."
+        }
+      ],
+      "triggers": [
+        {
+          "type": "FreeRankClaimed"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "Message",
+          "content": "Free rank claimed! Your guide will now introduce the systems that help you progress further."
+        }
+      ]
+    },
+    {
+      "id": "enchanter",
+      "name": "Speak with the Enchanter",
+      "description": "Follow the marker to the Enchanter and learn about enchant orbs.",
+      "completionAt": 1,
+      "target": {
+        "npc": "enchanter",
+        "label": "Enchanter",
+        "distanceThreshold": 10
+      },
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "enchanter"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "NpcMessage",
+          "speaker": "Enchanter",
+          "content": "Enchant orbs offer special boosts for your gear. Each orb has its own chance, success rate, and destroy rate."
+        },
+        {
+          "type": "Sound",
+          "content": "custom.npc_dialouge"
+        },
+        {
+          "type": "PlayerCommand",
+          "command": "enchanter"
+        }
+      ]
+    },
+    {
+      "id": "tinkerer",
+      "name": "Speak with the Tinkerer",
+      "description": "Visit the Tinkerer and learn how enchant dust improves your orbs.",
+      "completionAt": 1,
+      "target": {
+        "npc": "tinkerer",
+        "label": "Tinkerer",
+        "distanceThreshold": 10
+      },
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "tinkerer"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "NpcMessage",
+          "speaker": "Tinkerer",
+          "content": "Tinker dust upgrades enchant orbs and improves their effectiveness. Each dust piece has its own chance to succeed or fail."
+        },
+        {
+          "type": "Sound",
+          "content": "custom.npc_dialouge"
+        },
+        {
+          "type": "PlayerCommand",
+          "command": "tinkerer"
+        }
+      ]
+    },
+    {
+      "id": "coin-shop",
+      "name": "Visit the Coin Shop",
+      "description": "Speak with the Coin Shop NPC and see where activity coins are spent.",
+      "completionAt": 1,
+      "target": {
+        "npc": "coin-shop",
+        "label": "Coin Shop",
+        "distanceThreshold": 10
+      },
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "coin-shop"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "NpcMessage",
+          "speaker": "Coin Shop",
+          "content": "Earn coins from mining, farming, and mob grinding, then trade them here for helpful boosts and limited rewards."
+        },
+        {
+          "type": "Sound",
+          "content": "custom.npc_dialouge"
+        },
+        {
+          "type": "PlayerCommand",
+          "command": "coins shop"
+        }
+      ]
+    },
+    {
+      "id": "outpost",
+      "name": "Learn About Outposts",
+      "description": "Speak with the Outpost NPC to learn about server-wide boosts.",
+      "completionAt": 1,
+      "target": {
+        "npc": "outpost",
+        "label": "Outposts",
+        "distanceThreshold": 10
+      },
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "outpost"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "NpcMessage",
+          "speaker": "Outposts",
+          "content": "Capture and control outposts to unlock exclusive multipliers, discounts, and powerful boosts."
+        },
+        {
+          "type": "Sound",
+          "content": "custom.npc_dialouge"
+        },
+        {
+          "type": "PlayerCommand",
+          "command": "outpost"
+        }
+      ]
+    },
+    {
+      "id": "island-top",
+      "name": "View the Top Islands",
+      "description": "Visit the Island Top NPC and see the islands you are competing against.",
+      "completionAt": 1,
+      "target": {
+        "npc": "island-top",
+        "label": "Island Top",
+        "distanceThreshold": 10
+      },
+      "triggers": [
+        {
+          "type": "NpcInteract",
+          "npc": "island-top"
+        }
+      ],
+      "completeActions": [
+        {
+          "type": "Message",
+          "content": "You now know the core Skyblock systems. New guided objectives can continue to be added here as more server features open."
+        },
+        {
+          "type": "NpcMessage",
+          "speaker": "Island Top",
+          "content": "These are the islands leading the current map. Grow your island value to climb the rankings."
+        },
+        {
+          "type": "Sound",
+          "content": "custom.npc_dialouge"
+        },
+        {
+          "type": "PlayerCommand",
+          "command": "is top"
+        }
+      ]
+    }
+  ],
+  "npcInteractions": {
+    "discord": {
+      "speaker": "Our Discord",
+      "message": "Join our Discord for updates, giveaways, and the community. <click:open_url:\"https://pvpingmc.net/discord\"><hover:show_text:\"<yellow>Open pvpingmc.net/discord\"><#F4D35E><u>Click here to join.</u></hover></click>",
+      "sound": "custom.npc_dialouge"
+    },
+    "enchanter": {
+      "speaker": "Enchanter",
+      "message": "Enchant orbs offer special boosts for your gear. Each orb has its own chance, success rate, and destroy rate.",
+      "sound": "custom.npc_dialouge",
+      "command": "enchanter"
+    },
+    "tinkerer": {
+      "speaker": "Tinkerer",
+      "message": "Tinker dust upgrades enchant orbs and improves their effectiveness. Each dust piece has its own chance to succeed or fail.",
+      "sound": "custom.npc_dialouge",
+      "command": "tinkerer"
+    },
+    "coin-shop": {
+      "speaker": "Coin Shop",
+      "message": "Earn coins from mining, farming, and mob grinding, then trade them here for helpful boosts and limited rewards.",
+      "sound": "custom.npc_dialouge",
+      "command": "coins shop"
+    },
+    "outpost": {
+      "speaker": "Outposts",
+      "message": "Capture and control outposts to unlock exclusive multipliers, discounts, and powerful boosts.",
+      "sound": "custom.npc_dialouge",
+      "command": "outpost"
+    },
+    "island-top": {
+      "speaker": "Island Top",
+      "message": "These are the islands leading the current map. Grow your island value to climb the rankings.",
+      "sound": "custom.npc_dialouge",
+      "command": "is top"
+    }
+  }
+}

@@ -28,6 +28,7 @@ dependencies {
     compileOnly("net.luckperms:api:5.4")
     compileOnly("de.oliver:FancyNpcs:2.9.2")
     compileOnly(files("../MassiveCore/build/classes/java/main"))
+    testImplementation(files("../MassiveCore/build/libs/MassiveCore-MC-1.21.4-VIRAXIS.jar"))
     compileOnly(files("../Islands/build/classes/java/main"))
     compileOnly(files("../currencies/build/classes/java/main"))
     compileOnly(files("../holograms/build/classes/java/main"))
@@ -44,6 +45,6 @@ tasks.register<JavaExec>("verifyTutorialConfig") {
     dependsOn(tasks.testClasses)
     classpath = sourceSets.test.get().output + sourceSets.main.get().output + configurations.compileClasspath.get()
     mainClass.set("net.viraxis.tutorials.TutorialConfigCheck")
-    args(file("src/main/resources/gamemodes/skyblock.yml").absolutePath)
+    args(file("src/main/resources/gamemodes/skyblock.json").absolutePath)
     javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
 }

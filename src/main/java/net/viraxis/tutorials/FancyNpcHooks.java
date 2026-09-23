@@ -10,6 +10,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import java.util.HashMap;
+
 final class FancyNpcHooks implements Listener {
     private final TutorialsPlugin plugin;
 
@@ -17,12 +19,28 @@ final class FancyNpcHooks implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    static void claimManagedActions(TutorialsPlugin plugin) {
+        var manager = FancyNpcsPlugin.get().getNpcManager();
+        boolean changed = false;
+        for (Npc npc : manager.getAllNpcs()) {
+            if (npc == null || npc.getData() == null || !plugin.managesNpc(npc.getData().getName())) continue;
+            if (npc.getData().getActions() == null || npc.getData().getActions().isEmpty()) continue;
+            npc.getData().setActions(new HashMap<>());
+            npc.getData().setDirty(true);
+            npc.setDirty(true);
+            changed = true;
+        }
+        if (changed) manager.saveNpcs(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onNpcInteract(NpcInteractEvent event) {
         Player player = event.getPlayer();
         if (SyntheticPlayers.isSynthetic(player) || event.getNpc() == null || event.getNpc().getData() == null) return;
         String name = event.getNpc().getData().getName();
-        plugin.advance(player, "NpcInteract", trigger -> trigger.npc().equalsIgnoreCase(name));
+        if (!plugin.managesNpc(name)) return;
+        event.setCancelled(true);
+        plugin.interactNpc(player, name);
     }
 
     static Location location(String npcName) {

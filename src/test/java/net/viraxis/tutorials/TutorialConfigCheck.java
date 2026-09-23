@@ -1,12 +1,17 @@
 package net.viraxis.tutorials;
 
-import java.io.File;
+import com.massivecraft.massivecore.xlib.gson.GsonBuilder;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /** Small config contract check for the shipped Skyblock progression. */
 public final class TutorialConfigCheck {
-    public static void main(String[] args) {
-        TutorialDefinition line = TutorialDefinition.load(new File(args[0]));
+    public static void main(String[] args) throws Exception {
+        TutorialGamemode config = new GsonBuilder().create()
+                .fromJson(Files.readString(Path.of(args[0])), TutorialGamemode.class);
+        TutorialDefinition line = TutorialDefinition.from("skyblock", config);
         List<String> ids = line.quests().stream().map(TutorialDefinition.Quest::id).toList();
         if (!ids.equals(List.of("meet-guide", "discord", "vote", "island", "generator", "expand",
                 "shop", "first-sale", "settings", "free-rank", "enchanter", "tinkerer", "coin-shop",
@@ -25,6 +30,10 @@ public final class TutorialConfigCheck {
             throw new AssertionError("Rank must use a claim check");
         if (!line.quests().get(10).id().equals("enchanter"))
             throw new AssertionError("The guide must continue after the free-rank objective");
+        if (!line.npcInteractions().containsKey("discord") || !line.npcInteractions().containsKey("enchanter"))
+            throw new AssertionError("Tutorial-managed NPC interactions are missing");
+        if (line.quests().get(10).completeActions().stream().noneMatch(action -> action.type().equals("PlayerCommand")))
+            throw new AssertionError("The Enchanter objective must open its menu through Tutorials");
         verifyArrow(0, 1, 0, 1, "↑");
         verifyArrow(0, 1, -1, 1, "↗");
         verifyArrow(0, 1, -1, 0, "→");

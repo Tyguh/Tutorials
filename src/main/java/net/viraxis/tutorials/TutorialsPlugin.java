@@ -5,7 +5,6 @@ import com.massivecraft.massivecore.player.SyntheticPlayers;
 import com.massivecraft.massivecore.util.ActionFeedback;
 import com.massivecraft.massivecore.util.Feedback;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,7 +15,6 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,12 +37,13 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
     @Override public void onEnableInner() {
         activate(TutorialConfColl.class);
         try {
-            migrateAndCreateConfig();
+            prepareGamemodeMConf();
         } catch (Exception ex) {
             getLogger().severe("Could not prepare tutorial configuration: " + ex.getMessage());
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
+        activate(TutorialGamemodeColl.class);
         if (!loadDefinition()) {
             Bukkit.getPluginManager().disablePlugin(this);
             return;
@@ -53,7 +52,10 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
         if (islandHooks) Bukkit.getPluginManager().registerEvents(new IslandHooks(this), this);
         if (currencyHooks) Bukkit.getPluginManager().registerEvents(new CurrencyHooks(this), this);
-        if (npcHooks) Bukkit.getPluginManager().registerEvents(new FancyNpcHooks(this), this);
+        if (npcHooks) {
+            FancyNpcHooks.claimManagedActions(this);
+            Bukkit.getPluginManager().registerEvents(new FancyNpcHooks(this), this);
+        }
         presentation = new TutorialPresentation(this);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (definition == null) return;
@@ -90,9 +92,11 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
             return false;
         }
         try {
-            File file = new File("mconf/tutorials", selected + ".yml");
-            if (!file.isFile()) throw new IllegalArgumentException("Missing " + file.getPath());
-            TutorialDefinition loaded = TutorialDefinition.load(file);
+            TutorialGamemode gamemodeConfig = TutorialGamemodeColl.get().get(selected, false);
+            if (gamemodeConfig == null) throw new IllegalArgumentException(
+                    "Missing mconf/tutorials_gamemodes/" + selected + ".json");
+            gamemodeConfig.loadFromRemote();
+            TutorialDefinition loaded = TutorialDefinition.from(selected, gamemodeConfig);
             boolean needsIslands = loaded.quests().stream().flatMap(q -> q.triggers().stream())
                     .anyMatch(t -> t.type().equals("HasIsland") || t.ownIsland());
             boolean needsCurrencies = loaded.quests().stream().flatMap(q -> q.triggers().stream())
@@ -123,40 +127,21 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
         }
     }
 
-    private void migrateAndCreateConfig() throws Exception {
-        Path configDirectory = Path.of("mconf", "tutorials");
+    private void prepareGamemodeMConf() throws Exception {
+        Path configDirectory = Path.of("mconf", "tutorials_gamemodes");
         Files.createDirectories(configDirectory);
-
-        File oldConfig = new File(getDataFolder(), "config.yml");
-        if (oldConfig.isFile()) {
-            String oldGamemode = YamlConfiguration.loadConfiguration(oldConfig).getString("active-gamemode");
-            if (oldGamemode != null && !oldGamemode.isBlank()) {
-                TutorialConf.get().activeGamemode = oldGamemode;
-                TutorialConf.get().changed();
-                TutorialConf.get().sync();
-            }
-            Files.delete(oldConfig.toPath());
-        }
-
-        File oldGamemodes = new File(getDataFolder(), "gamemodes");
-        File[] oldFiles = oldGamemodes.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (oldFiles != null) {
-            for (File oldFile : oldFiles) {
-                Path destination = configDirectory.resolve(oldFile.getName());
-                if (Files.notExists(destination)) Files.move(oldFile.toPath(), destination);
-                else Files.delete(oldFile.toPath());
-            }
-            try { Files.deleteIfExists(oldGamemodes.toPath()); }
-            catch (java.nio.file.DirectoryNotEmptyException ignored) { /* Keep unrelated files. */ }
-        }
-
-        Path skyblock = configDirectory.resolve("skyblock.yml");
+        Path skyblock = configDirectory.resolve("skyblock.json");
         if (!Files.isRegularFile(skyblock)) {
-            try (InputStream template = getResource("gamemodes/skyblock.yml")) {
+            try (InputStream template = getResource("gamemodes/skyblock.json")) {
                 if (template == null) throw new IllegalStateException("Missing bundled Skyblock tutorial");
                 Files.copy(template, skyblock);
             }
         }
+
+        Path legacyDirectory = Path.of("mconf", "tutorials");
+        Files.deleteIfExists(legacyDirectory.resolve("skyblock.yml"));
+        try { Files.deleteIfExists(legacyDirectory); }
+        catch (java.nio.file.DirectoryNotEmptyException ignored) { /* Preserve unrelated legacy files. */ }
     }
 
     @EventHandler public void onJoin(PlayerJoinEvent event) {
@@ -254,6 +239,51 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
 
     private String key() { return gamemode + ":" + definition.id(); }
 
+    boolean managesNpc(String npcName) {
+        if (definition == null || npcName == null) return false;
+        String normalized = npcName.toLowerCase(Locale.ROOT);
+        if (definition.npcInteractions().containsKey(normalized)) return true;
+        return definition.quests().stream().anyMatch(quest ->
+                quest.target() != null && quest.target().npc() != null
+                        && quest.target().npc().equalsIgnoreCase(npcName));
+    }
+
+    void interactNpc(Player player, String npcName) {
+        if (definition == null || !player.isOnline() || npcName == null) return;
+        TutorialPlayer data = TutorialPlayerColl.get().get(player);
+        if (data == null) return;
+        TutorialPlayer.Progress progress = data.progress(key());
+        progress.normalize();
+        TutorialDefinition.Quest quest = current(progress);
+        boolean currentTarget = quest != null && quest.target() != null && quest.target().npc() != null
+                && quest.target().npc().equalsIgnoreCase(npcName);
+        if (currentTarget) {
+            boolean advancesOnClick = quest.triggers().stream().anyMatch(trigger ->
+                    trigger.type().equals("NpcInteract") && trigger.npc().equalsIgnoreCase(npcName));
+            if (advancesOnClick) {
+                advance(player, "NpcInteract", trigger -> trigger.npc().equalsIgnoreCase(npcName));
+            } else {
+                actions(player, quest.startActions(), false);
+            }
+            return;
+        }
+
+        TutorialDefinition.NpcInteraction interaction = definition.npcInteractions()
+                .get(npcName.toLowerCase(Locale.ROOT));
+        if (interaction == null) return;
+        Feedback.sendRawMiniMessage(player, "<#E69A30>[NPC] <#F4D35E>" + interaction.speaker()
+                + ": <#F5F5F5>" + interaction.message());
+        if (interaction.sound() != null && !interaction.sound().isBlank())
+            player.playSound(player.getLocation(), interaction.sound(), 1.0F, 1.0F);
+        if (interaction.command() != null && !interaction.command().isBlank()) {
+            String command = interaction.command().startsWith("/")
+                    ? interaction.command().substring(1) : interaction.command();
+            Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (player.isOnline()) player.performCommand(command);
+            }, 3L);
+        }
+    }
+
     private void actions(Player player, List<TutorialDefinition.Action> actions, boolean complete) {
         for (TutorialDefinition.Action action : actions) {
             if (action.type().equals("Message")) Feedback.send(player, complete
@@ -265,6 +295,12 @@ public class TutorialsPlugin extends MassivePlugin implements Listener {
                 if (command.startsWith("/")) command = command.substring(1);
                 if (!Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command))
                     getLogger().warning("Tutorial action command failed: " + command);
+            } else if (action.type().equals("PlayerCommand")) {
+                String command = action.command().replace("%player-name%", player.getName());
+                if (command.startsWith("/")) command = command.substring(1);
+                player.performCommand(command);
+            } else if (action.type().equals("Sound")) {
+                player.playSound(player.getLocation(), action.content(), 1.0F, 1.0F);
             }
         }
     }
