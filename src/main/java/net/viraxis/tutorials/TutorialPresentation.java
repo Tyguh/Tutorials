@@ -29,10 +29,10 @@ final class TutorialPresentation {
     private static final double BOB_SPEED = 0.055D;
     private static final double POSITION_LEAD_TICKS = 0.25D;
     private static final double LOOK_SMOOTHING = 0.20D;
+    private static final double MOVEMENT_THRESHOLD_SQUARED = 1.0E-5D;
     private static final double MAX_PREDICTED_MOTION_SQUARED = 4.0D;
     private final Map<UUID, Session> sessions = new HashMap<>();
     private final BukkitTask task;
-    private long ticks;
 
     TutorialPresentation(TutorialsPlugin plugin) {
         this.task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
@@ -66,7 +66,6 @@ final class TutorialPresentation {
     }
 
     private void tick() {
-        ticks++;
         for (Map.Entry<UUID, Session> entry : List.copyOf(sessions.entrySet())) {
             Player player = Bukkit.getPlayer(entry.getKey());
             if (player == null || !player.isOnline()) {
@@ -94,6 +93,7 @@ final class TutorialPresentation {
         private Location previousEye;
         private float smoothedYaw = Float.NaN;
         private float smoothedPitch = Float.NaN;
+        private double bobPhase;
 
         private Session(Player player) {
             this.hologramId = "tutorial-objective-" + player.getUniqueId();
@@ -130,8 +130,12 @@ final class TutorialPresentation {
 
             Vector viewDirection = smoothedViewDirection(playerEye);
             Vector horizontalViewDirection = horizontalDirection(viewDirection, smoothedYaw);
-            Location predictedEye = predictNextEye(playerEye);
-            double bob = Math.sin((ticks + POSITION_LEAD_TICKS) * BOB_SPEED) * BOB_AMPLITUDE;
+            Vector motion = observedMotion(playerEye);
+            Location predictedEye = predictNextEye(playerEye, motion);
+            if (motion == null || motion.lengthSquared() <= MOVEMENT_THRESHOLD_SQUARED)
+                bobPhase += BOB_SPEED;
+            double bob = Math.sin(bobPhase) * BOB_AMPLITUDE;
+            previousEye = playerEye.clone();
             Location marker = predictedEye.add(viewDirection.clone().multiply(MARKER_DISTANCE))
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
 
@@ -179,14 +183,15 @@ final class TutorialPresentation {
             markerVisible = false;
         }
 
-        private Location predictNextEye(Location playerEye) {
+        private Vector observedMotion(Location playerEye) {
+            if (previousEye == null || previousEye.getWorld() != playerEye.getWorld()) return null;
+            return playerEye.toVector().subtract(previousEye.toVector());
+        }
+
+        private Location predictNextEye(Location playerEye, Vector motion) {
             Location predicted = playerEye.clone();
-            if (previousEye != null && previousEye.getWorld() == playerEye.getWorld()) {
-                Vector motion = playerEye.toVector().subtract(previousEye.toVector());
-                if (motion.lengthSquared() <= MAX_PREDICTED_MOTION_SQUARED)
-                    predicted.add(motion.multiply(POSITION_LEAD_TICKS));
-            }
-            previousEye = playerEye.clone();
+            if (motion != null && motion.lengthSquared() <= MAX_PREDICTED_MOTION_SQUARED)
+                predicted.add(motion.clone().multiply(POSITION_LEAD_TICKS));
             return predicted;
         }
 
