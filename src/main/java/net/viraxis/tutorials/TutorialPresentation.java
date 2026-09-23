@@ -98,7 +98,7 @@ final class TutorialPresentation {
         private void updateBossBar(Player player) {
             float progress = Math.max(0.0F, Math.min(1.0F, count / (float) Math.max(1, quest.completionAt())));
             String counter = quest.completionAt() > 1 ? " <gray>(" + count + "/" + quest.completionAt() + ")</gray>" : "";
-            var title = Txt.colorize(player, "<#66D9E8><b>Objective:</b> <white>" + quest.name() + counter);
+            var title = Txt.colorize(player, "&3<#2B8C99><b>Objective:</b> <white>" + quest.name() + counter);
             if (bossBar == null) {
                 bossBar = BossBar.bossBar(title, progress, BossBar.Color.WHITE, BossBar.Overlay.PROGRESS);
                 player.showBossBar(bossBar);
