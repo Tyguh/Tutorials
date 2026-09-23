@@ -27,7 +27,8 @@ final class TutorialPresentation {
     private static final double MARKER_HEIGHT = 0.45D;
     private static final double BOB_AMPLITUDE = 0.09D;
     private static final double BOB_SPEED = 0.055D;
-    private static final double POSITION_LEAD_TICKS = 0.75D;
+    private static final double POSITION_LEAD_TICKS = 0.25D;
+    private static final double LOOK_SMOOTHING = 0.20D;
     private static final double MAX_PREDICTED_MOTION_SQUARED = 4.0D;
     private final Map<UUID, Session> sessions = new HashMap<>();
     private final BukkitTask task;
@@ -91,6 +92,8 @@ final class TutorialPresentation {
         private int regionZ = Integer.MIN_VALUE;
         private boolean insideSpawn;
         private Location previousEye;
+        private float smoothedYaw = Float.NaN;
+        private float smoothedPitch = Float.NaN;
 
         private Session(Player player) {
             this.hologramId = "tutorial-objective-" + player.getUniqueId();
@@ -125,14 +128,16 @@ final class TutorialPresentation {
                 targetDirection = target.toVector().subtract(playerEye.toVector());
             }
 
-            Vector viewDirection = horizontalDirection(playerEye);
+            Vector viewDirection = smoothedViewDirection(playerEye);
+            Vector horizontalViewDirection = horizontalDirection(viewDirection, smoothedYaw);
             Location predictedEye = predictNextEye(playerEye);
             double bob = Math.sin((ticks + POSITION_LEAD_TICKS) * BOB_SPEED) * BOB_AMPLITUDE;
             Location marker = predictedEye.add(viewDirection.clone().multiply(MARKER_DISTANCE))
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
 
             String arrow = targetDirection == null ? "↑" : DirectionArrow.between(
-                    viewDirection.getX(), viewDirection.getZ(), targetDirection.getX(), targetDirection.getZ());
+                    horizontalViewDirection.getX(), horizontalViewDirection.getZ(),
+                    targetDirection.getX(), targetDirection.getZ());
             String text = "<#E69A30><b>" + arrow + "</b> <#F4D35E>" + quest.name();
             if (quest.target() != null && targetDistance > quest.target().distanceThreshold())
                 text += " <gray>(" + String.format(java.util.Locale.ROOT, "%.1fm", targetDistance) + ")</gray>";
@@ -167,6 +172,8 @@ final class TutorialPresentation {
 
         private void hideMarker(Player player) {
             previousEye = null;
+            smoothedYaw = Float.NaN;
+            smoothedPitch = Float.NaN;
             if (hologram == null || !markerVisible) return;
             hologram.hideManual(player);
             markerVisible = false;
@@ -181,6 +188,20 @@ final class TutorialPresentation {
             }
             previousEye = playerEye.clone();
             return predicted;
+        }
+
+        private Vector smoothedViewDirection(Location playerEye) {
+            if (Float.isNaN(smoothedYaw) || Float.isNaN(smoothedPitch)) {
+                smoothedYaw = playerEye.getYaw();
+                smoothedPitch = playerEye.getPitch();
+            } else {
+                smoothedYaw += (float) (wrapDegrees(playerEye.getYaw() - smoothedYaw) * LOOK_SMOOTHING);
+                smoothedPitch += (float) ((playerEye.getPitch() - smoothedPitch) * LOOK_SMOOTHING);
+            }
+            Location smoothedLook = playerEye.clone();
+            smoothedLook.setYaw(smoothedYaw);
+            smoothedLook.setPitch(smoothedPitch);
+            return smoothedLook.getDirection().normalize();
         }
 
         private boolean isInsideSpawn(Location location) {
@@ -213,11 +234,18 @@ final class TutorialPresentation {
         }
     }
 
-    static Vector horizontalDirection(Location location) {
-        Vector direction = location.getDirection().setY(0.0D);
+    static Vector horizontalDirection(Vector viewDirection, float yaw) {
+        Vector direction = viewDirection.clone().setY(0.0D);
         if (direction.lengthSquared() > 1.0E-6D) return direction.normalize();
-        double yaw = Math.toRadians(location.getYaw());
-        return new Vector(-Math.sin(yaw), 0.0D, Math.cos(yaw));
+        double radians = Math.toRadians(yaw);
+        return new Vector(-Math.sin(radians), 0.0D, Math.cos(radians));
+    }
+
+    static double wrapDegrees(double degrees) {
+        double wrapped = degrees % 360.0D;
+        if (wrapped >= 180.0D) wrapped -= 360.0D;
+        if (wrapped < -180.0D) wrapped += 360.0D;
+        return wrapped;
     }
 
 }
