@@ -25,9 +25,9 @@ import java.util.UUID;
 final class TutorialPresentation {
     private static final double MARKER_DISTANCE = 3.2D;
     private static final double MARKER_HEIGHT = 0.45D;
-    private static final double BOB_AMPLITUDE = 0.11D;
-    private static final double BOB_SPEED = 0.10D;
-    private static final double POSITION_LEAD_TICKS = 1.0D;
+    private static final double BOB_AMPLITUDE = 0.09D;
+    private static final double BOB_SPEED = 0.055D;
+    private static final double POSITION_LEAD_TICKS = 0.75D;
     private static final double MAX_PREDICTED_MOTION_SQUARED = 4.0D;
     private final Map<UUID, Session> sessions = new HashMap<>();
     private final BukkitTask task;
@@ -91,6 +91,7 @@ final class TutorialPresentation {
         private int regionZ = Integer.MIN_VALUE;
         private boolean insideSpawn;
         private Location previousEye;
+        private double groundedEyeY = Double.NaN;
 
         private Session(Player player) {
             this.hologramId = "tutorial-objective-" + player.getUniqueId();
@@ -126,7 +127,8 @@ final class TutorialPresentation {
             }
 
             Vector viewDirection = horizontalDirection(playerEye);
-            Location predictedEye = predictNextEye(playerEye);
+            Location markerEye = stableMarkerEye(player, playerEye);
+            Location predictedEye = predictNextEye(markerEye);
             double bob = Math.sin((ticks + POSITION_LEAD_TICKS) * BOB_SPEED) * BOB_AMPLITUDE;
             Location marker = predictedEye.add(viewDirection.clone().multiply(MARKER_DISTANCE))
                     .add(0.0D, MARKER_HEIGHT + bob, 0.0D);
@@ -167,6 +169,7 @@ final class TutorialPresentation {
 
         private void hideMarker(Player player) {
             previousEye = null;
+            groundedEyeY = Double.NaN;
             if (hologram == null || !markerVisible) return;
             hologram.hideManual(player);
             markerVisible = false;
@@ -181,6 +184,15 @@ final class TutorialPresentation {
             }
             previousEye = playerEye.clone();
             return predicted;
+        }
+
+        private Location stableMarkerEye(Player player, Location playerEye) {
+            if (Double.isNaN(groundedEyeY) || player.isOnGround() || player.isFlying()
+                    || Math.abs(playerEye.getY() - groundedEyeY) > 2.5D)
+                groundedEyeY = playerEye.getY();
+            Location markerEye = playerEye.clone();
+            if (!player.isOnGround() && !player.isFlying()) markerEye.setY(groundedEyeY);
+            return markerEye;
         }
 
         private boolean isInsideSpawn(Location location) {
